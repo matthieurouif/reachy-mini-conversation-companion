@@ -1,0 +1,67 @@
+# This file configures the ASR → LLM → TTS conversation pipeline.
+#   Edit this file to customize your configuration
+#   API keys are still in .env file (OPENAI_API_KEY, ELEVENLABS_API_KEY, GEMINI_API_KEY)
+
+
+asr:
+  # openai_whisper: OpenAI Whisper API (cloud, high quality, requires OPENAI_API_KEY)
+  # parakeet: Parakeet MLX (local, Apple Silicon optimized, fast, no API key needed)
+  provider: parakeet
+
+  parakeet:
+    # Recommended: mlx-community/parakeet-tdt-0.6b-v3 (good balance of speed/accuracy)
+    model: mlx-community/parakeet-tdt-0.6b-v3
+
+    # fp32: Higher quality, slower (recommended for accuracy)
+    # bf16: Faster, slightly lower quality (recommended for speed)
+    precision: bf16
+
+
+llm:
+  # openai_gpt: OpenAI GPT models (cloud, requires OPENAI_API_KEY)
+  # gemini: Google Gemini (cloud, requires GEMINI_API_KEY)
+  provider: gemini
+
+  openai_gpt:
+    # gpt-4o-mini: Fast, cost-effective (recommended for most use cases)
+    # gpt-4o: Most capable, slower, more expensive
+    # gpt-4-turbo: Good balance
+    # gpt-5-nano : ?
+    model: gpt-4o-mini
+
+  gemini:
+    # gemini-2.5-flash-lite: Fastest, lowest latency (recommended for real-time)
+    # gemini-2.5-flash: Good balance of speed and quality
+    # gemini-2.0-flash-exp: Experimental, may change
+    model: gemini-2.5-flash-lite
+
+
+tts:
+  # openai_tts: OpenAI TTS API (cloud, natural, requires OPENAI_API_KEY)
+  # kokoro: Kokoro TTS (local, Apple Silicon optimized, fast, no API key needed)
+  # elevenlabs: ElevenLabs (cloud, very natural, requires ELEVENLABS_API_KEY)
+  provider: kokoro
+
+  # Trim leading silence from TTS audio
+  # This reduces perceived latency by removing silent pauses before speech
+  # Recommended: false (most TTS providers already optimize this)
+  trim_silence: true
+
+  openai_tts:
+    # Options: alloy, echo, fable, onyx, nova, shimmer
+    # Preview: https://platform.openai.com/docs/guides/text-to-speech/voice-options
+    voice: alloy
+
+  kokoro:
+    # Female: af_bella, af_sarah, bf_emma, bf_isabella
+    # Male: am_adam, am_michael, bm_george, bm_lewis
+    voice: am_adam
+
+  elevenlabs:
+    # Default: pNInz6obpgDQGcFmaJgB (Adam - professional male voice)
+    # Find more: https://elevenlabs.io/voice-library
+    voice_id: pNInz6obpgDQGcFmaJgB
+
+    # eleven_flash_v2_5: Fastest, lowest latency (recommended for real-time)
+    # eleven_multilingual_v2: Higher quality, supports more languages
+    model: eleven_flash_v2_5

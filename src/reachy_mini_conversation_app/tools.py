@@ -13,8 +13,6 @@ from reachy_mini import ReachyMini
 from reachy_mini.utils import create_head_pose
 # Import config to ensure .env is loaded before reading DEMO
 from reachy_mini_conversation_app.config import config  # noqa: F401
-# Import config to ensure .env is loaded before reading DEMO
-from reachy_mini_conversation_app.config import config  # noqa: F401
 
 
 logger = logging.getLogger(__name__)
@@ -457,13 +455,39 @@ class DoNothing(Tool):
         return {"status": "doing nothing", "reason": reason}
 
 
+class Speak(Tool):
+    """Speak a message out loud to the user. Only available in cascade mode. Allows to speak via a tool call, while simultaneously calling other tools."""
+
+    name = "speak"
+    description = "Speak a message out loud to the user."
+    parameters_schema = {
+        "type": "object",
+        "properties": {
+            "message": {
+                "type": "string",
+                "description": "The message to speak to the user",
+            },
+        },
+        "required": ["message"],
+    }
+
+    async def __call__(self, deps: ToolDependencies, **kwargs: Any) -> Dict[str, Any]:
+        """Return the message to be spoken (actual TTS handled by cascade handler)."""
+        message = kwargs.get("message", "")
+        if not message:
+            return {"error": "message cannot be empty"}
+
+        logger.info("Tool call: speak message=%s", message[:100])
+        return {"status": "speaking", "message": message}
+
+
 # Registry & specs (dynamic)
 
 
 def _load_demo_tools() -> None:
     demo = os.getenv("DEMO")
     if not demo:
-        logger.info(f"No DEMO specified, skipping demo tool loading, default scenario.")
+        logger.info("No DEMO specified, skipping demo tool loading, default scenario.")
         return
     try:
         importlib.import_module(f"demos.{demo}")
@@ -478,6 +502,21 @@ def _load_demo_tools() -> None:
 _load_demo_tools()
 ALL_TOOLS: Dict[str, Tool] = {cls.name: cls() for cls in get_concrete_subclasses(Tool)}  # type: ignore[type-abstract]
 ALL_TOOL_SPECS = [tool.spec() for tool in ALL_TOOLS.values()]
+
+
+def get_tool_specs(exclude_speak: bool = False) -> list[Dict[str, Any]]:
+    """Get tool specs, optionally excluding the speak tool.
+
+    Args:
+        exclude_speak: If True, exclude the 'speak' tool (for realtime mode where speaking is native)
+
+    Returns:
+        List of tool specifications
+
+    """
+    if exclude_speak:
+        return [spec for spec in ALL_TOOL_SPECS if spec.get("name") != "speak"]
+    return ALL_TOOL_SPECS
 
 
 # Dispatcher
