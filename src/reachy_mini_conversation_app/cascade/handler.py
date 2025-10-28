@@ -20,6 +20,11 @@ from reachy_mini_conversation_app.cascade.asr import ASRProvider, OpenAIWhisperA
 from reachy_mini_conversation_app.cascade.llm import OpenAILLM, LLMProvider
 from reachy_mini_conversation_app.cascade.tts import OpenAITTS, TTSProvider
 
+# Type hints only (conditional import to avoid circular dependency)
+from typing import TYPE_CHECKING
+if TYPE_CHECKING:
+    from reachy_mini_conversation_app.cascade.transcript_analysis import TranscriptAnalysisManager
+
 
 logger = logging.getLogger(__name__)
 
@@ -52,10 +57,19 @@ class CascadeHandler:
         self.loop: Optional[asyncio.AbstractEventLoop] = None
         self.loop_thread: Optional[threading.Thread] = None
 
+        # Transcript analysis (initialized below, may be None if no demo reactions)
+        self.transcript_manager: Optional[TranscriptAnalysisManager] = None
+
+        # Track last partial transcript to avoid log spam
+        self._last_partial_transcript = ""
+
         # Get tool specs and convert to Chat Completions format
         # Note : get_tool_specs() returns Realtime API format, so we need Chat Completions format
         # Cascade mode includes the 'speak' tool (exclude_speak=False by default)
         self.tool_specs = self._convert_tool_specs_to_chat_format(get_tool_specs())
+
+        # Initialize transcript analysis (if demo has reactions)
+        self.transcript_manager = self._init_transcript_analysis()
 
         logger.info(f"Cascade handler initialized (skip_audio_playback={skip_audio_playback})")
 
@@ -108,6 +122,15 @@ class CascadeHandler:
                 api_key=config.DEEPGRAM_API_KEY,
                 model=config.DEEPGRAM_MODEL,
                 language="en",
+            )
+
+        elif provider == "parakeet_streaming":
+            from reachy_mini_conversation_app.cascade.asr import ParakeetMLXStreamingASR
+            return ParakeetMLXStreamingASR(
+                model_name=config.PARAKEET_MODEL,
+                precision=config.PARAKEET_PRECISION,
+                context_size=config.PARAKEET_STREAMING_CONTEXT,
+                depth=config.PARAKEET_STREAMING_DEPTH,
             )
 
         else:
@@ -180,6 +203,53 @@ class CascadeHandler:
         else:
             raise ValueError(f"Unknown TTS provider: {provider}")
 
+    def _init_transcript_analysis(self) -> Optional[TranscriptAnalysisManager]:
+        """Initialize transcript analysis from demo reactions.
+
+        Returns:
+            TranscriptAnalysisManager if demo has reactions, None otherwise
+
+        """
+        from reachy_mini_conversation_app.cascade.transcript_analysis import (
+            KeywordAnalyzer,
+            TranscriptAnalyzer,
+            TranscriptAnalysisManager,
+            get_demo_reactions,
+        )
+
+        reactions = get_demo_reactions()
+        if not reactions:
+            logger.info("No demo reactions configured, transcript analysis disabled")
+            return None
+
+        analyzers: List[TranscriptAnalyzer] = []
+
+        # Add keyword analyzer if keywords defined
+        if reactions.get("keywords"):
+            analyzers.append(KeywordAnalyzer(reactions["keywords"]))
+            logger.info(f"  Keyword analyzer: {len(reactions['keywords'])} keywords")
+
+        # Add entity analyzer if entities defined (requires optional gliner extra)
+        if reactions.get("entities"):
+            try:
+                from reachy_mini_conversation_app.cascade.transcript_analysis import EntityAnalyzer
+
+                # Get GLiNER model (configurable per demo)
+                gliner_model = reactions.get("gliner_model", "urchade/gliner_small-v2.1")
+
+                analyzers.append(EntityAnalyzer(reactions["entities"], model_name=gliner_model))
+                logger.info(f"  Entity analyzer: {len(reactions['entities'])} entity types (model: {gliner_model})")
+            except ImportError:
+                logger.warning(
+                    "GLiNER not installed, skipping entity analyzer. "
+                    "Install with: pip install 'reachy_mini_conversation_app[cascade_gliner]'"
+                )
+
+        if not analyzers:
+            logger.info("No analyzers configured (keywords and entities both empty)")
+            return None
+
+        return TranscriptAnalysisManager(analyzers=analyzers, deps=self.deps)
 
     async def process_audio_manual(self, audio_bytes: bytes) -> str:
         """Process recorded audio through the cascade pipeline.
@@ -223,11 +293,19 @@ class CascadeHandler:
                 if self.deps.movement_manager:
                     self.deps.movement_manager.set_listening(False)
 
+                # Analyze final transcript (parallel with LLM, fire-and-forget)
+                if self.transcript_manager:
+                    asyncio.create_task(self.transcript_manager.analyze_final(transcript))
+
                 # 2. LLM: Text → Response + Tool Calls
                 logger.info("Generating LLM response...")
                 tracker.mark("llm_start")
                 await self._process_llm_response()
                 tracker.mark("llm_complete")
+
+                # Reset transcript analysis for next conversation
+                if self.transcript_manager:
+                    self.transcript_manager.reset()
 
                 # Note: summary will be printed in gradio_ui after TTS completes
 
@@ -271,7 +349,25 @@ class CascadeHandler:
         if isinstance(self.asr, StreamingASRProvider):
             await self.asr.send_audio_chunk(chunk)
             partial = await self.asr.get_partial_transcript()
-            if partial:
+
+            # Analyze partial transcript (debounced, fire-and-forget)
+            # IMPORTANT: Only use stable text for entity extraction to avoid noisy draft tokens
+            if partial and self.transcript_manager:
+                # Only log if transcript changed (reduce spam)
+                if partial != self._last_partial_transcript:
+                    logger.debug(f"🎤 Got partial transcript: '{partial[:60]}...'")
+                    self._last_partial_transcript = partial
+
+                # Get stable text for analysis (if provider supports it)
+                stable_text = partial  # Default to full partial
+                if hasattr(self.asr, 'get_stable_text'):
+                    stable_text = self.asr.get_stable_text()
+                    if stable_text and stable_text != partial:
+                        logger.debug(f"📌 Using stable text for analysis: '{stable_text[:60]}...'")
+
+                await self.transcript_manager.analyze_partial(stable_text)
+
+            if partial and partial != self._last_partial_transcript:
                 logger.debug(f"Partial transcript: {partial}")
             return partial
         return None
@@ -316,11 +412,22 @@ class CascadeHandler:
                 if self.deps.movement_manager:
                     self.deps.movement_manager.set_listening(False)
 
+                # Analyze final transcript (parallel with LLM, fire-and-forget)
+                if self.transcript_manager:
+                    asyncio.create_task(self.transcript_manager.analyze_final(transcript))
+
                 # 2. LLM: Text → Response + Tool Calls
                 logger.info("Generating LLM response...")
                 tracker.mark("llm_start")
                 await self._process_llm_response()
                 tracker.mark("llm_complete")
+
+                # Reset transcript analysis for next conversation
+                if self.transcript_manager:
+                    self.transcript_manager.reset()
+
+                # Reset partial transcript tracking
+                self._last_partial_transcript = ""
 
                 return transcript
 

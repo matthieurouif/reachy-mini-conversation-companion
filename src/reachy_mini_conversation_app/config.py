@@ -98,6 +98,8 @@ class Config:
     CASCADE_ASR_PROVIDER = _cascade['asr']['provider']
     PARAKEET_MODEL = _cascade['asr']['parakeet']['model']
     PARAKEET_PRECISION = _cascade['asr']['parakeet']['precision']
+    PARAKEET_STREAMING_CONTEXT = tuple(_cascade['asr'].get('parakeet_streaming', {}).get('context_size', [256, 256]))
+    PARAKEET_STREAMING_DEPTH = _cascade['asr'].get('parakeet_streaming', {}).get('depth')
     DEEPGRAM_MODEL = _cascade['asr'].get('deepgram_streaming', {}).get('model', 'nova-2')
 
     # LLM configuration
@@ -125,6 +127,8 @@ class Config:
     )
     if CASCADE_ASR_PROVIDER == "parakeet":
         logger.debug(f"Parakeet: model={PARAKEET_MODEL}, precision={PARAKEET_PRECISION}")
+    elif CASCADE_ASR_PROVIDER == "parakeet_streaming":
+        logger.debug(f"Parakeet Streaming: model={PARAKEET_MODEL}, precision={PARAKEET_PRECISION}, context={PARAKEET_STREAMING_CONTEXT}, depth={PARAKEET_STREAMING_DEPTH}")
     elif CASCADE_ASR_PROVIDER == "deepgram_streaming":
         logger.debug(f"Deepgram: model={DEEPGRAM_MODEL}")
     if CASCADE_LLM_PROVIDER == "gemini":
