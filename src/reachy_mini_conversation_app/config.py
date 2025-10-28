@@ -2,7 +2,6 @@ import os
 import logging
 from typing import Any, Dict
 from pathlib import Path
-from typing import Any, Dict
 
 import yaml  # type: ignore[import-untyped]
 from dotenv import load_dotenv
@@ -92,12 +91,14 @@ class Config:
 
     ELEVENLABS_API_KEY = os.getenv("ELEVENLABS_API_KEY")
     GEMINI_API_KEY = os.getenv("GEMINI_API_KEY")
+    DEEPGRAM_API_KEY = os.getenv("DEEPGRAM_API_KEY")
     _cascade = _load_cascade_config()
 
     # ASR configuration
     CASCADE_ASR_PROVIDER = _cascade['asr']['provider']
     PARAKEET_MODEL = _cascade['asr']['parakeet']['model']
     PARAKEET_PRECISION = _cascade['asr']['parakeet']['precision']
+    DEEPGRAM_MODEL = _cascade['asr'].get('deepgram_streaming', {}).get('model', 'nova-2')
 
     # LLM configuration
     CASCADE_LLM_PROVIDER = _cascade['llm']['provider']
@@ -124,6 +125,8 @@ class Config:
     )
     if CASCADE_ASR_PROVIDER == "parakeet":
         logger.debug(f"Parakeet: model={PARAKEET_MODEL}, precision={PARAKEET_PRECISION}")
+    elif CASCADE_ASR_PROVIDER == "deepgram_streaming":
+        logger.debug(f"Deepgram: model={DEEPGRAM_MODEL}")
     if CASCADE_LLM_PROVIDER == "gemini":
         logger.debug(f"Gemini: model={GEMINI_MODEL}")
     if CASCADE_TTS_PROVIDER == "openai_tts":

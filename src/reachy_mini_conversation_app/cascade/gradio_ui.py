@@ -21,6 +21,8 @@ if TYPE_CHECKING:
     from reachy_mini import ReachyMini
     from reachy_mini_conversation_app.cascade.handler import CascadeHandler
 
+from reachy_mini_conversation_app.cascade.asr import StreamingASRProvider
+
 
 logger = logging.getLogger(__name__)
 
@@ -60,6 +62,10 @@ class CascadeGradioUI:
 
         # Initialize persistent playback threads
         self._init_playback_threads()
+
+    def _is_streaming_asr(self) -> bool:
+        """Check if the ASR provider supports streaming."""
+        return isinstance(self.handler.asr, StreamingASRProvider)
 
     def _init_playback_threads(self) -> None:
         """Initialize persistent audio playback and wobbler threads (pre-warmed)."""
@@ -322,7 +328,21 @@ class CascadeGradioUI:
 
     def _record_audio(self) -> None:
         """Record audio from microphone in background thread."""
+        import io
+
         self.audio_frames = []
+
+        # Initialize streaming ASR session if supported
+        if self._is_streaming_asr():
+            logger.info("Initializing streaming ASR session...")
+            future = asyncio.run_coroutine_threadsafe(
+                self.handler.process_audio_streaming_start(),
+                self.handler.loop
+            )
+            try:
+                future.result(timeout=5.0)
+            except Exception as e:
+                logger.error(f"Failed to start streaming ASR: {e}")
 
         try:
             # Create audio stream (note : use small blocksize for lower latency)
@@ -338,6 +358,24 @@ class CascadeGradioUI:
                     if overflowed:
                         logger.warning("Audio buffer overflowed")
                     self.audio_frames.append(data.copy())
+
+                    # Send chunk to streaming ASR if supported
+                    if self._is_streaming_asr():
+                        # Convert chunk to WAV bytes
+                        wav_buffer = io.BytesIO()
+                        with wave.open(wav_buffer, "wb") as wav_file:
+                            wav_file.setnchannels(1)
+                            wav_file.setsampwidth(2)  # 16-bit
+                            wav_file.setframerate(self.sample_rate)
+                            wav_file.writeframes(data.tobytes())
+
+                        chunk_wav = wav_buffer.getvalue()
+
+                        # Send to handler (non-blocking)
+                        asyncio.run_coroutine_threadsafe(
+                            self.handler.process_audio_streaming_chunk(chunk_wav),
+                            self.handler.loop
+                        )
 
             # Thread cleanup - only set audio_data if main thread hasn't already done it
             # (main thread may have concatenated early for low latency)
@@ -600,9 +638,17 @@ class CascadeGradioUI:
             # Store the current conversation length to track new messages
             initial_history_length = len(self.handler.conversation_history)
 
-            # Use handler's process_audio_manual which handles ASR→LLM→TTS pipeline
-            # Note: This will execute speak tools but won't play audio (that's done separately below)
-            transcript = await self.handler.process_audio_manual(audio_bytes)
+            # Choose streaming or batch processing based on ASR provider
+            if self._is_streaming_asr():
+                # Streaming path: Finalize stream and get transcript
+                # Note: Streaming session was already started in _record_audio()
+                # and chunks were sent during recording
+                logger.info("Finalizing streaming ASR session...")
+                transcript = await self.handler.process_audio_streaming_end()
+            else:
+                # Batch path: Use handler's process_audio_manual which handles ASR→LLM→TTS pipeline
+                # Note: This will execute speak tools but won't play audio (that's done separately below)
+                transcript = await self.handler.process_audio_manual(audio_bytes)
 
             result["transcript"] = transcript
 
@@ -681,6 +727,11 @@ class CascadeGradioUI:
                 combined_text = ". ".join(speak_messages)
                 logger.info(f"Synthesizing {len(speak_messages)} speak message(s) as one stream")
                 await self._synthesize_for_gradio(combined_text)
+            else:
+                # No speech - print summary here since _synthesize_for_gradio won't be called
+                from reachy_mini_conversation_app.cascade.timing import tracker
+                logger.info("No speech output - printing latency summary")
+                tracker.print_summary()
 
             result["success"] = True
 
@@ -822,8 +873,7 @@ class CascadeGradioUI:
 
             logger.info("Playback complete (using pre-warmed system)")
 
-            # Print latency summary now that full pipeline is complete
-            # TODO: summary won't print if there is only a "non-speak" tool call ?
+            # Print latency summary now that full pipeline is complete (speech path)
             from reachy_mini_conversation_app.cascade.timing import tracker
             tracker.print_summary()
 

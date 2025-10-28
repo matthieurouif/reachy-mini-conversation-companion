@@ -1,6 +1,4 @@
-"""Simple demo for latency benchmarking with a custom tool.
-
-"""
+"""Simple demo for latency benchmarking with a custom tool."""
 
 import logging
 from typing import Any, Dict

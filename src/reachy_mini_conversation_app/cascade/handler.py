@@ -16,7 +16,7 @@ import numpy.typing as npt
 from reachy_mini_conversation_app.tools import ToolDependencies, get_tool_specs, dispatch_tool_call
 from reachy_mini_conversation_app.config import config
 from reachy_mini_conversation_app.prompts import get_session_instructions
-from reachy_mini_conversation_app.cascade.asr import ASRProvider, OpenAIWhisperASR
+from reachy_mini_conversation_app.cascade.asr import ASRProvider, OpenAIWhisperASR, StreamingASRProvider
 from reachy_mini_conversation_app.cascade.llm import OpenAILLM, LLMProvider
 from reachy_mini_conversation_app.cascade.tts import OpenAITTS, TTSProvider
 
@@ -98,6 +98,16 @@ class CascadeHandler:
             return ParakeetMLXASR(
                 model_name=config.PARAKEET_MODEL,
                 precision=config.PARAKEET_PRECISION,
+            )
+
+        elif provider == "deepgram_streaming":
+            from reachy_mini_conversation_app.cascade.asr import DeepgramStreamingASR
+            if not config.DEEPGRAM_API_KEY:
+                raise ValueError("DEEPGRAM_API_KEY not set in .env file")
+            return DeepgramStreamingASR(
+                api_key=config.DEEPGRAM_API_KEY,
+                model=config.DEEPGRAM_MODEL,
+                language="en",
             )
 
         else:
@@ -215,8 +225,9 @@ class CascadeHandler:
 
                 # 2. LLM: Text → Response + Tool Calls
                 logger.info("Generating LLM response...")
-                tracker.mark("llm_generation_start")
+                tracker.mark("llm_start")
                 await self._process_llm_response()
+                tracker.mark("llm_complete")
 
                 # Note: summary will be printed in gradio_ui after TTS completes
 
@@ -224,6 +235,97 @@ class CascadeHandler:
 
             except Exception as e:
                 logger.exception(f"Error processing audio: {e}")
+                if self.deps.movement_manager:
+                    self.deps.movement_manager.set_listening(False)
+                raise
+
+
+    async def process_audio_streaming_start(self) -> None:
+        """Initialize streaming ASR session.
+
+        Called from Gradio UI when user starts recording with a streaming ASR provider.
+        """
+        if isinstance(self.asr, StreamingASRProvider):
+            logger.info("Starting streaming ASR session")
+            await self.asr.start_stream()
+
+            # Update robot state - user is about to speak
+            if self.deps.movement_manager:
+                self.deps.movement_manager.set_listening(True)
+        else:
+            logger.warning("ASR provider does not support streaming")
+
+
+    async def process_audio_streaming_chunk(self, chunk: bytes) -> Optional[str]:
+        """Send audio chunk to streaming ASR and get partial transcript.
+
+        Called from Gradio UI during recording to stream audio in real-time.
+
+        Args:
+            chunk: Audio chunk bytes (WAV format)
+
+        Returns:
+            Partial transcript if available, None otherwise
+
+        """
+        if isinstance(self.asr, StreamingASRProvider):
+            await self.asr.send_audio_chunk(chunk)
+            partial = await self.asr.get_partial_transcript()
+            if partial:
+                logger.debug(f"Partial transcript: {partial}")
+            return partial
+        return None
+
+
+    async def process_audio_streaming_end(self) -> str:
+        """Finalize streaming session, get final transcript, and run LLM pipeline.
+
+        Called from Gradio UI when user stops recording with a streaming ASR provider.
+
+        Returns:
+            Final complete transcript
+
+        """
+        from reachy_mini_conversation_app.cascade.timing import tracker
+
+        async with self.processing_lock:
+            try:
+                # Get final transcript from streaming ASR
+                if isinstance(self.asr, StreamingASRProvider):
+                    logger.info("Finalizing streaming ASR session")
+                    tracker.mark("transcribing_start")
+                    transcript = await self.asr.end_stream()
+                    tracker.mark("asr_complete", {"transcript_len": len(transcript)})
+                else:
+                    # Fallback to batch (shouldn't happen if UI checks properly)
+                    logger.warning("ASR provider does not support streaming, this shouldn't happen")
+                    return ""
+
+                logger.info(f"User said: {transcript}")
+
+                if not transcript.strip():
+                    logger.warning("Empty transcript, ignoring")
+                    if self.deps.movement_manager:
+                        self.deps.movement_manager.set_listening(False)
+                    return ""
+
+                # Add user message to history
+                self.conversation_history.append({"role": "user", "content": transcript})
+
+                # Update robot state - done listening
+                if self.deps.movement_manager:
+                    self.deps.movement_manager.set_listening(False)
+
+                # 2. LLM: Text → Response + Tool Calls
+                logger.info("Generating LLM response...")
+                tracker.mark("llm_start")
+                await self._process_llm_response()
+                tracker.mark("llm_complete")
+
+                return transcript
+
+            except Exception as e:
+                logger.exception(f"Error processing streaming audio: {e}")
                 if self.deps.movement_manager:
                     self.deps.movement_manager.set_listening(False)
                 raise

@@ -1,12 +1,13 @@
 # This file configures the ASR → LLM → TTS conversation pipeline.
 #   Edit this file to customize your configuration
-#   API keys are still in .env file (OPENAI_API_KEY, ELEVENLABS_API_KEY, GEMINI_API_KEY)
+#   API keys are still in .env file (OPENAI_API_KEY, ELEVENLABS_API_KEY, GEMINI_API_KEY, DEEPGRAM_API_KEY)
 
 
 asr:
   # openai_whisper: OpenAI Whisper API (cloud, high quality, requires OPENAI_API_KEY)
   # parakeet: Parakeet MLX (local, Apple Silicon optimized, fast, no API key needed)
-  provider: parakeet
+  # deepgram_streaming: Deepgram streaming ASR (cloud, real-time, low latency, requires DEEPGRAM_API_KEY)
+  provider: deepgram_streaming
 
   parakeet:
     # Recommended: mlx-community/parakeet-tdt-0.6b-v3 (good balance of speed/accuracy)
@@ -15,6 +16,12 @@ asr:
     # fp32: Higher quality, slower (recommended for accuracy)
     # bf16: Faster, slightly lower quality (recommended for speed)
     precision: bf16
+
+  deepgram_streaming:
+    # nova-2: Best quality and speed (recommended)
+    # nova: Previous generation
+    # base: Fastest, lower quality
+    model: nova-2
 
 
 llm:
