@@ -2,7 +2,7 @@ import asyncio
 from datetime import datetime, timezone
 from unittest.mock import MagicMock
 
-from reachy_mini_conversation_app.tools import ToolDependencies
+from reachy_mini_conversation_app.tools.core_tools import ToolDependencies
 from reachy_mini_conversation_app.openai_realtime import OpenaiRealtimeHandler
 
 
