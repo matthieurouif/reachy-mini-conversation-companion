@@ -38,6 +38,7 @@ all_vision = [
   "reachy_mini_conversation_app[yolo_vision]",
   "reachy_mini_conversation_app[mediapipe_vision]",
 ]
+astronomer = ["rapidfuzz", "astropy"]
 
 [dependency-groups]
 dev = [
