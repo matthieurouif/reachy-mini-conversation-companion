@@ -11,7 +11,7 @@ from openai import AsyncOpenAI
 from fastrtc import AdditionalOutputs, AsyncStreamHandler, wait_for_item
 from numpy.typing import NDArray
 
-from reachy_mini_conversation_app.tools import (
+from reachy_mini_conversation_app.tools.core_tools import (
     ToolDependencies,
     get_tool_specs,
     dispatch_tool_call,
