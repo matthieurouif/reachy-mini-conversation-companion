@@ -8,10 +8,10 @@ camera
 # do_nothing
 # head_tracking
 # move_head
-sweep_look
+# sweep_look
 
 # AN EXAMPLE OF A CUSTOM TOOL DEFINED LOCALLY
-# throw_stone
+throw_stone
 
 # AN EXAMPLE OF RMSCRIPT
 check_behind
