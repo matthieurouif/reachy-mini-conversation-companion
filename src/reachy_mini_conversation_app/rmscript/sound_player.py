@@ -1,13 +1,13 @@
 """Sound player utility for ReachyMiniScript."""
 
 import logging
-import os
 import threading
+from typing import Tuple, Optional
 from pathlib import Path
-from typing import Optional, Tuple
 
 import numpy as np
 from numpy.typing import NDArray
+
 from reachy_mini.motion.move import Move
 
 
@@ -24,6 +24,7 @@ class SoundQueueMove(Move):  # type: ignore
             sound_file_path: Absolute path to the sound file
             duration: Duration of the sound in seconds (for blocking mode)
             blocking: If True, move lasts for sound duration. If False, move is instant.
+
         """
         from pathlib import Path
         self.sound_file_path = str(Path(sound_file_path))
@@ -44,13 +45,15 @@ class SoundQueueMove(Move):  # type: ignore
             try:
                 if self.blocking:
                     # Blocking mode: play in foreground thread (blocks the evaluate call)
-                    from reachy_mini_conversation_app.rmscript.sound_player import play_sound_blocking
                     from pathlib import Path
+
+                    from reachy_mini_conversation_app.rmscript.sound_player import play_sound_blocking
                     play_sound_blocking(Path(self.sound_file_path))
                 else:
                     # Async mode: play in background thread
-                    from reachy_mini_conversation_app.rmscript.sound_player import play_sound_async
                     from pathlib import Path
+
+                    from reachy_mini_conversation_app.rmscript.sound_player import play_sound_async
                     play_sound_async(Path(self.sound_file_path))
             except Exception as e:
                 logger.error(f"Error playing sound {self.sound_file_path}: {e}")
@@ -70,6 +73,7 @@ def find_sound_file(sound_name: str, search_paths: list[Path]) -> Optional[Path]
 
     Returns:
         Path to the sound file, or None if not found
+
     """
     extensions = [".wav", ".mp3", ".ogg", ".flac"]
 
@@ -92,6 +96,7 @@ def get_sound_duration(file_path: Path) -> float:
 
     Returns:
         Duration in seconds, or 0.0 if unable to determine
+
     """
     try:
         # Try using soundfile first (fastest and most reliable)
@@ -132,6 +137,7 @@ def play_sound_blocking(file_path: Path) -> Tuple[bool, float]:
 
     Returns:
         Tuple of (success: bool, duration: float)
+
     """
     try:
         # Get duration first
@@ -151,8 +157,8 @@ def play_sound_blocking(file_path: Path) -> Tuple[bool, float]:
             logger.debug(f"pydub playback failed: {e}")
 
         # Fallback: use subprocess with system audio player
-        import subprocess
         import platform
+        import subprocess
 
         system = platform.system()
         if system == "Darwin":  # macOS
@@ -193,6 +199,7 @@ def play_sound_async(file_path: Path) -> bool:
 
     Returns:
         True if playback started successfully
+
     """
     def _play():
         play_sound_blocking(file_path)

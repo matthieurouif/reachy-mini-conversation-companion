@@ -162,7 +162,7 @@ class ReachyMiniScriptCompiler:
 
 
 def compile_rmscript(source: str, verbose: bool = False) -> CompiledTool:
-    """Convenience function to compile ReachyMiniScript source."""
+    """Compile ReachyMiniScript source, convenience function."""
     log_level = "INFO" if verbose else "WARNING"
     compiler = ReachyMiniScriptCompiler(log_level=log_level)
     return compiler.compile(source)

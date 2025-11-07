@@ -55,7 +55,7 @@ class Token:
     column: int
 
     def __repr__(self) -> str:
-        """String representation for debugging."""
+        """Turn as string representation for debugging."""
         return f"Token({self.type.name}, {self.value!r}, L{self.line}:C{self.column})"
 
 
@@ -331,6 +331,6 @@ class Lexer:
 
 
 def tokenize(source: str) -> List[Token]:
-    """Convenience function to tokenize source code."""
+    """Tokenize source code, convenience function."""
     lexer = Lexer(source)
     return lexer.tokenize()

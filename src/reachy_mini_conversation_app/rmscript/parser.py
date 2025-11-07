@@ -394,6 +394,6 @@ class Parser:
 
 
 def parse(tokens: List[Token]) -> Program:
-    """Convenience function to parse tokens into AST."""
+    """Parse tokens into AST, convenience function."""
     parser = Parser(tokens)
     return parser.parse()

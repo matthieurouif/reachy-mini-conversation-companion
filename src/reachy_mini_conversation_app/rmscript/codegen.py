@@ -15,7 +15,7 @@ class CodeGenerator:
         """Generate executable function from IR."""
 
         def executable(mini: "ReachyMini") -> None:  # type: ignore # noqa: F821
-            """Generated function to execute on robot."""
+            """Generate function to execute on robot."""
             for action in ir:
                 if isinstance(action, WaitAction):
                     time.sleep(action.duration)

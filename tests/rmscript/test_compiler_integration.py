@@ -612,7 +612,7 @@ play mysound
         action = tool.ir[0]
         assert isinstance(action, PlaySoundAction)
         assert action.sound_name == "mysound"
-        assert action.blocking == False
+        assert not action.blocking
 
     def test_play_sound_blocking_pause(self):
         """Test 'play sound pause' command (blocking)."""
@@ -631,7 +631,7 @@ play mysound pause
         action = tool.ir[0]
         assert isinstance(action, PlaySoundAction)
         assert action.sound_name == "mysound"
-        assert action.blocking == True
+        assert action.blocking
 
     def test_play_sound_blocking_fully(self):
         """Test 'play sound fully' command (blocking with synonym)."""
@@ -648,7 +648,7 @@ play mysound fully
         from reachy_mini_conversation_app.rmscript.errors import PlaySoundAction
         assert isinstance(action, PlaySoundAction)
         assert action.sound_name == "mysound"
-        assert action.blocking == True
+        assert action.blocking
 
     def test_play_sound_in_sequence(self):
         """Test play sound in sequence with movements."""
@@ -670,10 +670,10 @@ look center
         from reachy_mini_conversation_app.rmscript.errors import Action, PlaySoundAction
         assert isinstance(tool.ir[0], Action)  # look left
         assert isinstance(tool.ir[1], PlaySoundAction)  # play sound1 (async)
-        assert tool.ir[1].blocking == False
+        assert not tool.ir[1].blocking
         assert isinstance(tool.ir[2], Action)  # turn right
         assert isinstance(tool.ir[3], PlaySoundAction)  # play sound2 (blocking)
-        assert tool.ir[3].blocking == True
+        assert tool.ir[3].blocking
         assert isinstance(tool.ir[4], Action)  # look center
 
     def test_multiple_sounds(self):
@@ -697,7 +697,7 @@ play outro
         assert isinstance(tool.ir[0], PlaySoundAction)  # intro (async)
         assert isinstance(tool.ir[1], WaitAction)
         assert isinstance(tool.ir[2], PlaySoundAction)  # main (blocking)
-        assert tool.ir[2].blocking == True
+        assert tool.ir[2].blocking
         assert isinstance(tool.ir[3], WaitAction)
         assert isinstance(tool.ir[4], PlaySoundAction)  # outro (async)
 

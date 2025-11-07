@@ -38,7 +38,7 @@ logger = logging.getLogger(__name__)
 
 
 def main():
-    """Main execution function."""
+    """Call main function to run the script."""
     # Parse command-line arguments
     parser = argparse.ArgumentParser(
         description="Execute a ReachyMiniScript file on the robot",
