@@ -103,7 +103,7 @@ def get_sound_duration(file_path: Path) -> float:
         try:
             import soundfile as sf
             with sf.SoundFile(str(file_path)) as f:
-                duration = len(f) / f.samplerate
+                duration: float = len(f) / f.samplerate
                 return duration
         except ImportError:
             pass
@@ -174,9 +174,9 @@ def play_sound_blocking(file_path: Path) -> Tuple[bool, float]:
                 except FileNotFoundError:
                     continue
         elif system == "Windows":
-            import winsound
+            import winsound  # type: ignore[import-not-found,unused-ignore]
             if file_path.suffix == ".wav":
-                winsound.PlaySound(str(file_path), winsound.SND_FILENAME)
+                winsound.PlaySound(str(file_path), winsound.SND_FILENAME)  # type: ignore[attr-defined,unused-ignore]
             else:
                 # Use PowerShell for non-WAV files
                 subprocess.run(
@@ -201,7 +201,7 @@ def play_sound_async(file_path: Path) -> bool:
         True if playback started successfully
 
     """
-    def _play():
+    def _play() -> None:
         play_sound_blocking(file_path)
 
     try:

@@ -79,7 +79,7 @@ from reachy_mini_conversation_app.rmscript.constants import (
 class SemanticAnalyzer:
     """Analyzes AST and generates intermediate representation."""
 
-    def __init__(self):
+    def __init__(self) -> None:
         """Initialize semantic analyzer."""
         self.errors: List[CompilationError] = []
         self.warnings: List[CompilationError] = []
@@ -228,7 +228,7 @@ class SemanticAnalyzer:
             line=action.line,
         )
 
-    def _get_qualitative_values(self, action: SingleAction):
+    def _get_qualitative_values(self, action: SingleAction) -> tuple[float, float, float, float, float, float]:
         """Get context-aware qualitative values based on movement type.
 
         Returns tuple of (very_small, small, medium, large, very_large, default).
@@ -286,18 +286,18 @@ class SemanticAnalyzer:
         # If qualitative specified, convert it using context-aware values
         if action.strength_qualitative is not None:
             if action.strength_qualitative in VERY_SMALL_KEYWORDS:
-                return very_small
+                return float(very_small)
             elif action.strength_qualitative in SMALL_KEYWORDS:
-                return small
+                return float(small)
             elif action.strength_qualitative in MEDIUM_KEYWORDS:
-                return medium
+                return float(medium)
             elif action.strength_qualitative in LARGE_KEYWORDS:
-                return large
+                return float(large)
             elif action.strength_qualitative in VERY_LARGE_KEYWORDS:
-                return very_large
+                return float(very_large)
 
         # Use context-aware default
-        return default
+        return float(default)
 
     def resolve_duration(self, action: SingleAction) -> float:
         """Resolve duration parameter."""

@@ -81,7 +81,7 @@ class CompiledTool:
     description: str  # LLM uses this to decide when to call the tool
 
     # Execution
-    executable: Optional[Callable] = None  # The compiled function
+    executable: Optional[Callable[..., Any]] = None  # The compiled function
 
     # Compilation results
     success: bool = False
@@ -228,7 +228,7 @@ class CompiledTool:
 
                 # Create the move
                 move = GotoQueueMove(
-                    target_head_pose=target_head_pose,
+                    target_head_pose=target_head_pose,  # type: ignore[arg-type]
                     start_head_pose=current_head_pose,
                     target_antennas=target_antennas,
                     start_antennas=current_antennas,
@@ -279,8 +279,8 @@ class CompiledTool:
                 logger.info("Returning single picture in Camera-compatible format (b64_im)")
             elif len(pictures) > 1:
                 # Multiple pictures: return as array
-                result["pictures"] = pictures
-                result["picture_count"] = len(pictures)
+                result["pictures"] = pictures  # type: ignore[assignment]
+                result["picture_count"] = len(pictures)  # type: ignore[assignment]
                 logger.info(f"Returning {len(pictures)} pictures in array format")
             else:
                 # No pictures captured successfully
@@ -288,7 +288,7 @@ class CompiledTool:
                 logger.error("All picture captures failed")
 
             # Store picture_moves separately for non-JSON uses (like run_rmscript.py)
-            result["_picture_moves"] = picture_moves
+            result["_picture_moves"] = picture_moves  # type: ignore[assignment]
 
         return result
 

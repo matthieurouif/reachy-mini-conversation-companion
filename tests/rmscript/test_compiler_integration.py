@@ -12,7 +12,7 @@ from reachy_mini_conversation_app.rmscript.errors import Action, WaitAction
 class TestBasicCompilation:
     """Test basic compilation cases."""
 
-    def test_simple_look_left(self):
+    def test_simple_look_left(self) -> None:
         """Test compiling a simple 'look left' command."""
         source = """
 DESCRIPTION test
@@ -39,7 +39,7 @@ look left
         assert yaw == pytest.approx(30, abs=0.1)
         assert action.duration == 1.0
 
-    def test_keyword_reuse_with_and(self):
+    def test_keyword_reuse_with_and(self) -> None:
         """Test 'and' keyword reuse: 'look left and up'."""
         source = """
 
@@ -56,13 +56,13 @@ look left and up
         assert isinstance(action, Action)
 
         # Should have both yaw and pitch
-        rotation = R.from_matrix(action.head_pose[:3, :3])  # type: ignore
+        rotation = R.from_matrix(action.head_pose[:3, :3])
         roll, pitch, yaw = rotation.as_euler("xyz", degrees=True)
 
         assert yaw == pytest.approx(30, abs=0.1)  # left = positive yaw
         assert pitch == pytest.approx(-30, abs=0.1)  # up = negative pitch
 
-    def test_wait_command(self):
+    def test_wait_command(self) -> None:
         """Test wait command compilation."""
         source = """
 
@@ -79,7 +79,7 @@ wait 2s
         assert isinstance(wait, WaitAction)
         assert wait.duration == 2.0
 
-    def test_repeat_block(self):
+    def test_repeat_block(self) -> None:
         """Test repeat block expansion."""
         source = """
 
@@ -99,7 +99,7 @@ repeat 3
 class TestErrorHandling:
     """Test error handling."""
 
-    def test_invalid_keyword(self):
+    def test_invalid_keyword(self) -> None:
         """Test that invalid keywords produce errors."""
         source = """
 
@@ -113,7 +113,7 @@ jump up
         assert len(tool.errors) >= 1
         assert any("jump" in err.message.lower() for err in tool.errors)
 
-    def test_out_of_range_warning(self):
+    def test_out_of_range_warning(self) -> None:
         """Test that out-of-range values produce warnings."""
         source = """
 
@@ -131,7 +131,7 @@ turn left 200
 class TestCodeGeneration:
     """Test code generation."""
 
-    def test_to_python_code(self):
+    def test_to_python_code(self) -> None:
         """Test Python code generation."""
         source = """
 
@@ -156,7 +156,7 @@ wait 1s
 class TestQualitativeKeywords:
     """Test qualitative strength keywords."""
 
-    def test_very_small_qualitative(self):
+    def test_very_small_qualitative(self) -> None:
         """Test VERY_SMALL qualitative keywords (context-aware: 10° for turn)."""
         source = """
 
@@ -173,7 +173,7 @@ turn left tiny
         # Turn uses BODY_YAW_VERY_SMALL = 10 degrees
         assert action.body_yaw == pytest.approx(math.radians(10.0), abs=0.01)
 
-    def test_small_qualitative(self):
+    def test_small_qualitative(self) -> None:
         """Test SMALL qualitative keywords (context-aware: 30° for turn)."""
         source = """
 
@@ -188,7 +188,7 @@ turn left little
         # Turn uses BODY_YAW_SMALL = 30 degrees
         assert action.body_yaw == pytest.approx(math.radians(30.0), abs=0.01)
 
-    def test_medium_qualitative(self):
+    def test_medium_qualitative(self) -> None:
         """Test MEDIUM qualitative keywords (context-aware: 60° for turn)."""
         source = """
 
@@ -203,7 +203,7 @@ turn left medium
         # Turn uses BODY_YAW_MEDIUM = 60 degrees
         assert action.body_yaw == pytest.approx(math.radians(60.0), abs=0.01)
 
-    def test_large_qualitative(self):
+    def test_large_qualitative(self) -> None:
         """Test LARGE qualitative keywords (context-aware: 90° for turn)."""
         source = """
 
@@ -218,7 +218,7 @@ turn left strong
         # Turn uses BODY_YAW_LARGE = 90 degrees
         assert action.body_yaw == pytest.approx(math.radians(90.0), abs=0.01)
 
-    def test_very_large_qualitative(self):
+    def test_very_large_qualitative(self) -> None:
         """Test VERY_LARGE qualitative keywords (context-aware: 120° for turn)."""
         source = """
 
@@ -233,7 +233,7 @@ turn left enormous
         # Turn uses BODY_YAW_VERY_LARGE = 120 degrees
         assert action.body_yaw == pytest.approx(math.radians(120.0), abs=0.01)
 
-    def test_qualitative_for_distances(self):
+    def test_qualitative_for_distances(self) -> None:
         """Test qualitative keywords work for head translations (mm)."""
         source = """
 
@@ -252,7 +252,7 @@ head forward little
 class TestAntennaDirections:
     """Test antenna directional keywords."""
 
-    def test_antenna_directional_up(self):
+    def test_antenna_directional_up(self) -> None:
         """Test antenna with 'up' direction."""
         source = """
 
@@ -269,7 +269,7 @@ antenna both up
         assert action.antennas[0] == pytest.approx(0.0, abs=0.01)
         assert action.antennas[1] == pytest.approx(0.0, abs=0.01)
 
-    def test_antenna_directional_left(self):
+    def test_antenna_directional_left(self) -> None:
         """Test antenna with 'left' direction."""
         source = """
 
@@ -285,7 +285,7 @@ antenna both left
         assert action.antennas[0] == pytest.approx(math.radians(-90), abs=0.01)
         assert action.antennas[1] == pytest.approx(math.radians(-90), abs=0.01)
 
-    def test_antenna_left_left(self):
+    def test_antenna_left_left(self) -> None:
         """Test 'antenna left left' (left antenna pointing left)."""
         source = """
 
@@ -300,7 +300,7 @@ antenna left left
         # Only left antenna (index 0) should be set to -90°
         assert action.antennas[0] == pytest.approx(math.radians(-90), abs=0.01)
 
-    def test_antenna_right_right(self):
+    def test_antenna_right_right(self) -> None:
         """Test 'antenna right right' (right antenna pointing right)."""
         source = """
 
@@ -315,7 +315,7 @@ antenna right right
         # Only right antenna (index 1) should be set to 90°
         assert action.antennas[1] == pytest.approx(math.radians(90), abs=0.01)
 
-    def test_antenna_clock_numeric(self):
+    def test_antenna_clock_numeric(self) -> None:
         """Test antenna with numeric clock position."""
         source = """
 
@@ -331,7 +331,7 @@ antenna both 3
         assert action.antennas[0] == pytest.approx(math.radians(90), abs=0.01)
         assert action.antennas[1] == pytest.approx(math.radians(90), abs=0.01)
 
-    def test_antenna_clock_keyword(self):
+    def test_antenna_clock_keyword(self) -> None:
         """Test antenna with clock keyword."""
         source = """
 
@@ -351,7 +351,7 @@ antenna both ext
 class TestTurnCommand:
     """Test turn command rotates both body and head."""
 
-    def test_turn_left_rotates_body_and_head(self):
+    def test_turn_left_rotates_body_and_head(self) -> None:
         """Test that 'turn left' rotates both body yaw and head yaw."""
         source = """
 
@@ -374,7 +374,7 @@ turn left 50
         _, _, yaw = rotation.as_euler("xyz", degrees=True)
         assert yaw == pytest.approx(50.0, abs=0.1)
 
-    def test_turn_right_rotates_body_and_head(self):
+    def test_turn_right_rotates_body_and_head(self) -> None:
         """Test that 'turn right' rotates both body yaw and head yaw."""
         source = """
 
@@ -395,7 +395,7 @@ turn right 30
         _, _, yaw = rotation.as_euler("xyz", degrees=True)
         assert yaw == pytest.approx(-30.0, abs=0.1)
 
-    def test_turn_center_resets_body_and_head(self):
+    def test_turn_center_resets_body_and_head(self) -> None:
         """Test that 'turn center' resets both body and head to zero."""
         source = """
 
@@ -420,7 +420,7 @@ turn center
 class TestContextAwareQualitatives:
     """Test that qualitative keywords use context-aware values."""
 
-    def test_maximum_turn_vs_look_pitch(self):
+    def test_maximum_turn_vs_look_pitch(self) -> None:
         """Test 'maximum' uses different values for turn vs look up."""
         # Turn left maximum - should use BODY_YAW_VERY_LARGE (120°)
         turn_source = """
@@ -449,7 +449,7 @@ look up maximum
         _, pitch, _ = rotation.as_euler("xyz", degrees=True)
         assert pitch == pytest.approx(-38.0, abs=0.1)  # up = negative pitch
 
-    def test_maximum_look_yaw_vs_pitch(self):
+    def test_maximum_look_yaw_vs_pitch(self) -> None:
         """Test 'maximum' uses different values for look left vs look up."""
         # Look left maximum - should use HEAD_YAW_VERY_LARGE (60°)
         left_source = """
@@ -478,7 +478,7 @@ look up maximum
         _, pitch, _ = rotation.as_euler("xyz", degrees=True)
         assert pitch == pytest.approx(-38.0, abs=0.1)
 
-    def test_maximum_head_translation(self):
+    def test_maximum_head_translation(self) -> None:
         """Test 'maximum' for head translation uses TRANSLATION_VERY_LARGE (28mm)."""
         source = """
 
@@ -492,7 +492,7 @@ head forward maximum
         # Should be 28mm = 0.028m
         assert action.head_pose[0, 3] == pytest.approx(0.028, abs=0.0001)
 
-    def test_tilt_uses_pitch_roll_limits(self):
+    def test_tilt_uses_pitch_roll_limits(self) -> None:
         """Test tilt uses HEAD_PITCH_ROLL limits (more restrictive)."""
         source = """
 
@@ -512,7 +512,7 @@ tilt left maximum
 class TestPictureCommand:
     """Test picture command."""
 
-    def test_picture_compiles(self):
+    def test_picture_compiles(self) -> None:
         """Test that 'picture' command compiles successfully."""
         source = """
 
@@ -529,7 +529,7 @@ picture
         action = tool.ir[0]
         assert isinstance(action, PictureAction)
 
-    def test_picture_in_sequence(self):
+    def test_picture_in_sequence(self) -> None:
         """Test picture command in a sequence with movements."""
         source = """
 
@@ -549,7 +549,7 @@ turn center
         assert isinstance(tool.ir[1], PictureAction)  # picture
         assert isinstance(tool.ir[2], Action)  # turn center
 
-    def test_multiple_pictures(self):
+    def test_multiple_pictures(self) -> None:
         """Test multiple picture commands."""
         source = """
 
@@ -571,7 +571,7 @@ picture
         assert isinstance(tool.ir[2], Action)  # look right
         assert isinstance(tool.ir[3], PictureAction)  # picture
 
-    def test_picture_with_wait(self):
+    def test_picture_with_wait(self) -> None:
         """Test picture command with wait."""
         source = """
 
@@ -595,7 +595,7 @@ picture
 class TestPlaySoundCommand:
     """Test play sound command."""
 
-    def test_play_sound_async(self):
+    def test_play_sound_async(self) -> None:
         """Test 'play sound' command (non-blocking)."""
         source = """
 
@@ -614,7 +614,7 @@ play mysound
         assert action.sound_name == "mysound"
         assert not action.blocking
 
-    def test_play_sound_blocking_pause(self):
+    def test_play_sound_blocking_pause(self) -> None:
         """Test 'play sound pause' command (blocking)."""
         source = """
 
@@ -633,7 +633,7 @@ play mysound pause
         assert action.sound_name == "mysound"
         assert action.blocking
 
-    def test_play_sound_blocking_fully(self):
+    def test_play_sound_blocking_fully(self) -> None:
         """Test 'play sound fully' command (blocking with synonym)."""
         source = """
 
@@ -650,7 +650,7 @@ play mysound fully
         assert action.sound_name == "mysound"
         assert action.blocking
 
-    def test_play_sound_in_sequence(self):
+    def test_play_sound_in_sequence(self) -> None:
         """Test play sound in sequence with movements."""
         source = """
 
@@ -676,7 +676,7 @@ look center
         assert tool.ir[3].blocking
         assert isinstance(tool.ir[4], Action)  # look center
 
-    def test_multiple_sounds(self):
+    def test_multiple_sounds(self) -> None:
         """Test multiple sound commands."""
         source = """
 
@@ -705,7 +705,7 @@ play outro
 class TestWaitSyntax:
     """Test wait command syntax requirements."""
 
-    def test_wait_requires_s_suffix(self):
+    def test_wait_requires_s_suffix(self) -> None:
         """Test that wait without 's' suffix produces error."""
         source = """
 
@@ -719,7 +719,7 @@ wait 1
         assert len(tool.errors) >= 1
         assert any("'s' after wait duration" in err.message for err in tool.errors)
 
-    def test_wait_with_s_suffix_works(self):
+    def test_wait_with_s_suffix_works(self) -> None:
         """Test that wait with 's' suffix compiles."""
         source = """
 
@@ -734,7 +734,7 @@ wait 1s
         assert isinstance(wait, WaitAction)
         assert wait.duration == 1.0
 
-    def test_wait_decimal_with_s_suffix(self):
+    def test_wait_decimal_with_s_suffix(self) -> None:
         """Test that decimal wait with 's' suffix works."""
         source = """
 

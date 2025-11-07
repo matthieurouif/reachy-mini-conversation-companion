@@ -1,17 +1,17 @@
 """Code generator for ReachyMiniScript - creates executable Python functions."""
 
 import time
-from typing import List, Callable
+from typing import Any, List, Callable
 
-from reachy_mini_conversation_app.rmscript.errors import Action, WaitAction
+from reachy_mini_conversation_app.rmscript.errors import Action, WaitAction, PictureAction, PlaySoundAction
 
 
 class CodeGenerator:
     """Generates executable Python functions from IR."""
 
     def generate(
-        self, tool_name: str, description: str, ir: List[Action | WaitAction]
-    ) -> Callable:
+        self, tool_name: str, description: str, ir: List[Action | WaitAction | PictureAction | PlaySoundAction]
+    ) -> Callable[..., Any]:
         """Generate executable function from IR."""
 
         def executable(mini: "ReachyMini") -> None:  # type: ignore # noqa: F821
@@ -20,9 +20,19 @@ class CodeGenerator:
                 if isinstance(action, WaitAction):
                     time.sleep(action.duration)
 
+                elif isinstance(action, PictureAction):
+                    # Picture and sound actions are handled by execute_queued(), not here
+                    # This is for backwards compatibility with execute() which is rarely used
+                    pass
+
+                elif isinstance(action, PlaySoundAction):
+                    # Picture and sound actions are handled by execute_queued(), not here
+                    # This is for backwards compatibility with execute() which is rarely used
+                    pass
+
                 elif isinstance(action, Action):
                     # Build parameters for goto_target
-                    kwargs = {}
+                    kwargs: dict[str, Any] = {}
 
                     if action.head_pose is not None:
                         kwargs["head"] = action.head_pose

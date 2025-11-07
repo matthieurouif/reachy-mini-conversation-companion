@@ -175,7 +175,7 @@ class Lexer:
         start_col = self.column
         num_str = ""
 
-        while self.peek() and (self.peek().isdigit() or self.peek() == "."):
+        while (ch := self.peek()) is not None and (ch.isdigit() or ch == "."):
             num_str += self.advance()  # type: ignore
 
         # Check if followed by 's' for duration
@@ -192,7 +192,7 @@ class Lexer:
         start_col = self.column
         ident = ""
 
-        while self.peek() and (self.peek().isalnum() or self.peek() == "_"):
+        while (ch := self.peek()) is not None and (ch.isalnum() or ch == "_"):
             ident += self.advance()  # type: ignore
 
         ident_lower = ident.lower()
@@ -307,12 +307,12 @@ class Lexer:
                 continue
 
             # Read numbers
-            if self.peek() and self.peek().isdigit():
+            if (ch := self.peek()) is not None and ch.isdigit():
                 tokens.append(self.read_number())
                 continue
 
             # Read identifiers/keywords
-            if self.peek() and (self.peek().isalpha() or self.peek() == "_"):
+            if (ch := self.peek()) is not None and (ch.isalpha() or ch == "_"):
                 tokens.append(self.read_identifier())
                 continue
 

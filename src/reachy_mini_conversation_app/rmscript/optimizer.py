@@ -2,13 +2,13 @@
 
 from typing import List
 
-from reachy_mini_conversation_app.rmscript.errors import Action, WaitAction
+from reachy_mini_conversation_app.rmscript.errors import Action, WaitAction, PictureAction, PlaySoundAction
 
 
 class Optimizer:
     """Optimizes intermediate representation."""
 
-    def optimize(self, ir: List[Action | WaitAction]) -> List[Action | WaitAction]:
+    def optimize(self, ir: List[Action | WaitAction | PictureAction | PlaySoundAction]) -> List[Action | WaitAction | PictureAction | PlaySoundAction]:
         """Optimize IR.
 
         Current optimizations:
@@ -19,7 +19,7 @@ class Optimizer:
         - Combine compatible actions with same duration
         - Minimize movement time
         """
-        optimized = []
+        optimized: List[Action | WaitAction | PictureAction | PlaySoundAction] = []
 
         i = 0
         while i < len(ir):
@@ -29,9 +29,13 @@ class Optimizer:
             if isinstance(action, WaitAction):
                 total_wait = action.duration
                 j = i + 1
-                while j < len(ir) and isinstance(ir[j], WaitAction):
-                    total_wait += ir[j].duration  # type: ignore
-                    j += 1
+                while j < len(ir):
+                    next_action = ir[j]
+                    if isinstance(next_action, WaitAction):
+                        total_wait += next_action.duration
+                        j += 1
+                    else:
+                        break
 
                 optimized.append(
                     WaitAction(
