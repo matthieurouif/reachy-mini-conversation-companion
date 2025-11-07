@@ -125,16 +125,81 @@ def _load_profile_tools() -> None:
     for tool_name in tool_names:
         loaded = False
 
-        # Try profile-local tool first
-        try:
-            profile_tool_module = f"{PROFILES_DIRECTORY}.{profile}.{tool_name}"
-            importlib.import_module(profile_tool_module)
-            logger.info(f"✓ Loaded profile-local tool: {tool_name}")
-            loaded = True
-        except ModuleNotFoundError:
-            pass  # Not in profile directory, try shared tools
-        except Exception as e:
-            logger.warning(f"Error loading profile-local tool {tool_name}: {e}")
+        # Try profile-local .rmscript file first
+        rmscript_path = profile_module_path / f"{tool_name}.rmscript"
+        if rmscript_path.exists():
+            try:
+
+                from reachy_mini_conversation_app.rmscript import ReachyMiniScriptCompiler
+
+                # Compile the rmscript
+                compiler = ReachyMiniScriptCompiler()
+                compiled = compiler.compile_file(str(rmscript_path))
+
+                # Log compilation results
+                if not compiled.success:
+                    logger.warning(f"rmscript '{tool_name}' compiled with errors:")
+                    for error in compiled.errors:
+                        logger.warning(f"  {error}")
+                elif compiled.warnings:
+                    logger.info(f"rmscript '{tool_name}' compiled with warnings:")
+                    for warning in compiled.warnings:
+                        logger.info(f"  {warning}")
+
+                # Create Tool class dynamically
+                if compiled.success:
+
+                    async def __call__(
+                        self: Tool, deps: ToolDependencies, **kwargs: Any
+                    ) -> Dict[str, Any]:
+                        """Execute the rmscript tool."""
+                        return compiled.execute_queued(deps)
+
+                else:
+
+                    async def __call__(
+                        self: Tool, deps: ToolDependencies, **kwargs: Any
+                    ) -> Dict[str, Any]:
+                        """Return compilation errors."""
+                        error_messages = "\n".join(str(e) for e in compiled.errors)
+                        return {"error": f"Tool compilation failed:\n{error_messages}"}
+
+                # Create the Tool subclass using type()
+                # The class is automatically registered via get_concrete_subclasses(Tool)
+                type(
+                    compiled.name if compiled.name else tool_name,
+                    (Tool,),
+                    {
+                        "name": compiled.name if compiled.name else tool_name,
+                        "description": compiled.description or f"Tool from {tool_name}.rmscript",
+                        "parameters_schema": {
+                            "type": "object",
+                            "properties": {},
+                            "required": [],
+                        },
+                        "__call__": __call__,
+                        "__module__": f"{PROFILES_DIRECTORY}.{profile}",
+                        "_compiled_tool": compiled,
+                    },
+                )
+
+                logger.info(f"✓ Loaded rmscript tool: {tool_name}")
+                loaded = True
+
+            except Exception as e:
+                logger.warning(f"Error loading rmscript {tool_name}: {e}")
+
+        # Try profile-local .py tool if not rmscript
+        if not loaded:
+            try:
+                profile_tool_module = f"{PROFILES_DIRECTORY}.{profile}.{tool_name}"
+                importlib.import_module(profile_tool_module)
+                logger.info(f"✓ Loaded profile-local tool: {tool_name}")
+                loaded = True
+            except ModuleNotFoundError:
+                pass  # Not in profile directory, try shared tools
+            except Exception as e:
+                logger.warning(f"Error loading profile-local tool {tool_name}: {e}")
 
         # Try shared tools library if not found in profile
         if not loaded:

@@ -8,9 +8,9 @@ turn left maximum
 wait 1s
 
 # Take a picture
-picture
 play yummy
+picture
 
 # Return to center
 wait 0.5s
-turn center
+turn center veryfast
