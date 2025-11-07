@@ -4,18 +4,13 @@
 DESCRIPTION Robot turns around to look behind itself and take a picture with its camera
 
 # Turn to look behind
-turn left 160
-wait 4s
+turn left 180
+wait 0.5s
 
 # Take a picture
-play yummy
-wait 4s
-play yummy
-wait 4s
-play yummy
-wait 4s
+play camera_shutter
 picture
 
 # Return to center
-wait 4s
+wait 1s
 turn center
