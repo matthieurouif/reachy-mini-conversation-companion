@@ -1,12 +1,12 @@
-# ReachyMiniScript - Kid-Friendly Robot Programming
+# rmscript - Kid-Friendly Robot Programming
 
-ReachyMiniScript is a natural language-inspired programming language designed to make robot programming accessible and fun for children. It compiles to Python code that controls the Reachy Mini robot.
+rmscript is a natural language-inspired programming language designed to make robot programming accessible and fun for children. It compiles to Python code that controls the Reachy Mini robot.
 
 ## Example Usage
 
 Create a file `hello.rmscript`:
 
-```ReachyMiniScript
+```rmscript
 DESCRIPTION Wave hello to someone
 antenna up
 wait 1s
@@ -27,9 +27,9 @@ python src/reachy_mini_conversation_app/rmscript/run_rmscript.py path/to/hello.r
 
 ### File Structure
 
-Every ReachyMiniScript file has a simple structure:
+Every rmscript file has a simple structure:
 
-```ReachyMiniScript
+```rmscript
 DESCRIPTION Wave hello to someone
 # Your commands here
 look left
@@ -42,7 +42,7 @@ wait 1s
 
 ### Basic Commands
 
-```ReachyMiniScript
+```rmscript
 # Comments start with #
 
 # Movement commands
@@ -65,9 +65,9 @@ play othersound pause
 
 ### Case Insensitivity
 
-ReachyMiniScript is case-insensitive for keywords:
+rmscript is case-insensitive for keywords:
 
-```ReachyMiniScript
+```rmscript
 LOOK left    # Same as "look left"
 Look Left    # Same as "look left"
 WAIT 1s      # Same as "wait 1s"
@@ -79,7 +79,7 @@ WAIT 1s      # Same as "wait 1s"
 
 Control the robot's head orientation (pitch and yaw):
 
-```ReachyMiniScript
+```rmscript
 look left          # Turn head left (30° default)
 look right 45      # Turn head right 45°
 look up           # Tilt head up (30° default)
@@ -99,7 +99,7 @@ look neutral      # Same as center
 
 Rotate the robot's body (the head rotates together with the body):
 
-```ReachyMiniScript
+```rmscript
 turn left         # Rotate body and head left (30° default)
 turn right 90     # Rotate body and head right 90°
 turn center       # Face forward
@@ -115,7 +115,7 @@ turn center       # Face forward
 Control the antenna positions using multiple syntaxes:
 
 **Clock Position (Numeric 0-12):**
-```ReachyMiniScript
+```rmscript
 antenna both 0       # 0 o'clock = 0° (straight up)
 antenna both 3       # 3 o'clock = 90° (external/right)
 antenna both 6       # 6 o'clock = 180° (straight down)
@@ -124,7 +124,7 @@ antenna left 4.5     # Left antenna to 4.5 o'clock (135°)
 ```
 
 **Clock Keywords:**
-```ReachyMiniScript
+```rmscript
 antenna both high    # 0° (high position)
 antenna both ext     # 90° (external)
 antenna both low     # 180° (low position)
@@ -132,7 +132,7 @@ antenna both int     # -90° (internal)
 ```
 
 **Directional Keywords (Natural Language):**
-```ReachyMiniScript
+```rmscript
 antenna both up      # 0° (up)
 antenna both right   # 90° (right/external)
 antenna both down    # 180° (down)
@@ -154,7 +154,7 @@ antenna right right  # Right antenna pointing right (90°)
 
 Move the head forward/back/left/right/up/down in space:
 
-```ReachyMiniScript
+```rmscript
 head forward 10    # Move head forward 10mm
 head back 5        # Move head back 5mm
 head left 8        # Move head left 8mm
@@ -172,7 +172,7 @@ head down 3        # Move head down 3mm
 
 Tilt the head side-to-side:
 
-```ReachyMiniScript
+```rmscript
 tilt left 15       # Tilt head left
 tilt right 15      # Tilt head right
 tilt center        # Return to level
@@ -185,7 +185,7 @@ tilt center        # Return to level
 
 Pause between movements:
 
-```ReachyMiniScript
+```rmscript
 wait 1s           # Wait 1 second
 wait 0.5s         # Wait 0.5 seconds
 wait 2.5s         # Wait 2.5 seconds
@@ -197,7 +197,7 @@ wait 2.5s         # Wait 2.5 seconds
 
 Take a picture with the robot's camera and add it to the conversation:
 
-```ReachyMiniScript
+```rmscript
 picture           # Take a picture
 ```
 
@@ -212,7 +212,7 @@ The picture command captures a frame from the camera and returns it as a base64-
 5. **LLM integration**: When called by the LLM, pictures are automatically added to the conversation
 
 **Single picture (LLM-compatible):**
-```ReachyMiniScript
+```rmscript
 DESCRIPTION Check behind by taking a picture
 turn left maximum
 wait 0.5s
@@ -234,7 +234,7 @@ This script:
 - Pictures are captured when the movement queue reaches them (not immediately)
 
 **Multiple pictures:**
-```ReachyMiniScript
+```rmscript
 DESCRIPTION Look around and take pictures
 look left
 wait 0.5s
@@ -273,7 +273,7 @@ User: "Can you check what's behind you?"
 
 Play sound files (.wav, .mp3, .ogg, .flac) during script execution:
 
-```ReachyMiniScript
+```rmscript
 play soundname         # Play sound in background (async, continues immediately)
 play soundname pause   # Wait for sound to finish before continuing (blocking)
 ```
@@ -284,7 +284,7 @@ The script automatically searches for sound files in this order:
 3. `sounds/` subdirectory
 
 **Asynchronous playback (default):**
-```ReachyMiniScript
+```rmscript
 play intro            # Starts playing, script continues immediately
 look left
 wait 1s
@@ -292,7 +292,7 @@ wait 1s
 The sound plays in the background while movements execute.
 
 **Blocking playback (wait for sound to finish):**
-```ReachyMiniScript
+```rmscript
 play mysound pause    # Waits for sound to finish
 # OR use synonyms:
 play mysound fully
@@ -304,7 +304,7 @@ play mysound complete
 The script pauses until the sound finishes playing, then continues.
 
 **Example use case:**
-```ReachyMiniScript
+```rmscript
 DESCRIPTION Greet with sound and movement
 play hello pause      # Play greeting sound fully
 wait 0.5s
@@ -325,7 +325,7 @@ antenna both down
 
 Chain multiple directions with the same action keyword:
 
-```ReachyMiniScript
+```rmscript
 # Reuse "look" keyword
 look left and up 25
 # → Equivalent to: look left + look up 25
@@ -343,7 +343,7 @@ This creates more natural, flowing descriptions while optimizing execution.
 
 Use descriptive words instead of numbers - works for both angles and distances:
 
-```ReachyMiniScript
+```rmscript
 # 5 levels of strength - values are context-aware!
 
 # Examples:
@@ -382,7 +382,7 @@ The same qualitative keyword maps to different values depending on the movement 
 
 Use descriptive speed words:
 
-```ReachyMiniScript
+```rmscript
 look left superfast    # 0.2 seconds
 look right fast        # 0.5 seconds
 look up slow           # 2.0 seconds
@@ -391,7 +391,7 @@ look down superslow    # 3.0 seconds
 
 Combine with 'and':
 
-```ReachyMiniScript
+```rmscript
 turn left and look right fast
 # Both movements complete in 0.5 seconds
 ```
@@ -400,7 +400,7 @@ turn left and look right fast
 
 Repeat a sequence of commands:
 
-```ReachyMiniScript
+```rmscript
 repeat 3
     look left
     wait 0.5s
@@ -422,7 +422,7 @@ repeat 2
 
 Combine multiple movements into a single smooth motion:
 
-```ReachyMiniScript
+```rmscript
 # All happen simultaneously
 antenna both up and look up 25 and turn left 30
 ```
@@ -444,7 +444,7 @@ Source Code → Lexer → Parser → Semantic Analyzer → Optimizer → Code Ge
 Converts source text into tokens with indentation tracking:
 
 ```python
-from reachy_mini.ReachyMiniScript.lexer import Lexer
+from reachy_mini.rmscript.lexer import Lexer
 
 source = "look left\nwait 1s"
 lexer = Lexer(source)
@@ -463,7 +463,7 @@ Features:
 Builds an Abstract Syntax Tree from tokens:
 
 ```python
-from reachy_mini.ReachyMiniScript.parser import Parser
+from reachy_mini.rmscript.parser import Parser
 
 ast = Parser(tokens).parse()
 # → Program(tool_name='...', description='...', statements=[...])
@@ -480,7 +480,7 @@ Features:
 Applies defaults, validates ranges, and generates IR:
 
 ```python
-from reachy_mini.ReachyMiniScript.semantic import SemanticAnalyzer
+from reachy_mini.rmscript.semantic import SemanticAnalyzer
 
 ir, errors, warnings = SemanticAnalyzer().analyze(ast)
 # → List[Action | WaitAction], List[CompilationError], List[CompilationError]
@@ -498,7 +498,7 @@ Features:
 Optimizes the IR:
 
 ```python
-from reachy_mini.ReachyMiniScript.optimizer import Optimizer
+from reachy_mini.rmscript.optimizer import Optimizer
 
 optimized_ir = Optimizer().optimize(ir)
 ```
@@ -512,7 +512,7 @@ Features:
 Creates executable Python functions:
 
 ```python
-from reachy_mini.ReachyMiniScript.codegen import CodeGenerator
+from reachy_mini.rmscript.codegen import CodeGenerator
 
 executable = CodeGenerator().generate(tool_name, description, ir)
 # → Callable that executes the behavior
@@ -525,14 +525,14 @@ Features:
 
 ## API Reference
 
-### ReachyMiniScriptCompiler
+### rmscriptCompiler
 
 Main compiler class.
 
 ```python
-from reachy_mini.ReachyMiniScript import ReachyMiniScriptCompiler
+from reachy_mini.rmscript import rmscriptCompiler
 
-compiler = ReachyMiniScriptCompiler(log_level="INFO")
+compiler = rmscriptCompiler(log_level="INFO")
 tool = compiler.compile(source_code)
 ```
 
@@ -621,7 +621,7 @@ class WaitAction:
 
 ### Example 1: Simple Greeting
 
-```ReachyMiniScript
+```rmscript
 
 DESCRIPTION Greet someone warmly
 # Wave with antennas
@@ -640,7 +640,7 @@ look center
 
 ### Example 2: Search Pattern
 
-```ReachyMiniScript
+```rmscript
 
 DESCRIPTION Look around to search for something
 # Scan left to right
@@ -662,7 +662,7 @@ look center
 
 ### Example 3: Dance Choreography
 
-```ReachyMiniScript
+```rmscript
 
 DESCRIPTION Perform a fun dance routine
 # Opening pose
@@ -685,7 +685,7 @@ turn center and look center and antenna down
 
 ### Example 4: Using Qualitative Strength
 
-```ReachyMiniScript
+```rmscript
 
 DESCRIPTION Wave shyly at someone
 # Small movements
@@ -698,7 +698,7 @@ look center
 
 ### Example 5: Complex Combination
 
-```ReachyMiniScript
+```rmscript
 
 DESCRIPTION Show excitement when greeting
 # Quick movements
@@ -720,19 +720,19 @@ look center slow
 
 Errors prevent code generation:
 
-```ReachyMiniScript
+```rmscript
 # Invalid keyword
 jump up
 ```
 **Output:** `❌ Line 1: Unexpected token: 'jump'`
 
-```ReachyMiniScript
+```rmscript
 # Invalid direction for keyword
 turn up
 ```
 **Output:** `❌ Line 1: Invalid direction 'up' for keyword 'turn'`
 
-```ReachyMiniScript
+```rmscript
 # Missing indentation
 repeat 3
 look left
@@ -743,13 +743,13 @@ look left
 
 Warnings allow compilation but alert to potential issues:
 
-```ReachyMiniScript
+```rmscript
 # Exceeds safe range
 turn left 200
 ```
 **Output:** `⚠️  Line 1: Body yaw 200.0° exceeds safe range (±160.0°), will be clamped`
 
-```ReachyMiniScript
+```rmscript
 # Exceeds physical limit
 look up 50
 ```
@@ -779,7 +779,7 @@ tool.execute(mini)
 
 ### 1. Use Comments
 
-```ReachyMiniScript
+```rmscript
 # Good: explain what you're doing
 # Opening sequence: get attention
 antenna up
@@ -807,7 +807,7 @@ look right 45
 
 ### 3. Break Complex Behaviors into Steps
 
-```ReachyMiniScript
+```rmscript
 # Good: readable steps
 antenna up
 wait 1s
@@ -823,7 +823,7 @@ antenna up and look left and wait 1s and look right
 
 ### 4. Use Repeat for Patterns
 
-```ReachyMiniScript
+```rmscript
 # Good: use repeat
 repeat 3
     antenna up
@@ -840,7 +840,7 @@ antenna down
 
 ### 5. Test with Small Values First
 
-```ReachyMiniScript
+```rmscript
 # Start conservative
 look left 10
 turn right 15
@@ -852,7 +852,7 @@ turn right 90
 
 ## Physical Safety Limits
 
-ReachyMiniScript validates all movements against these limits:
+rmscript validates all movements against these limits:
 
 | Movement | Limit | Warning Threshold |
 |----------|-------|------------------|
@@ -896,7 +896,7 @@ When values aren't specified:
 
 **Solution:** Use only spaces or only tabs (not mixed). Ensure nested blocks are indented consistently.
 
-```ReachyMiniScript
+```rmscript
 # Bad: mixed tabs and spaces
 repeat 3
     look left      # 4 spaces
@@ -914,7 +914,7 @@ repeat 3
 
 **Solution:** Indent the repeat block body.
 
-```ReachyMiniScript
+```rmscript
 # Bad
 repeat 3
 look left
@@ -933,11 +933,11 @@ repeat 3
 
 ## Contributing
 
-To extend ReachyMiniScript:
+To extend rmscript:
 
 1. **Add new keywords**: Update `lexer.py`, `parser.py`, and `semantic.py`
 2. **Add new features**: Modify the appropriate compiler stage
-3. **Add tests**: Create integration tests in `tests/test_ReachyMiniScript/`
+3. **Add tests**: Create integration tests in `tests/test_rmscript/`
 4. **Update docs**: Keep this README and examples current
 
 ## License
