@@ -25,6 +25,13 @@ dependencies = [
     "mcp>=1.27.1",
 ]
 
+# Fork addition: local face recognition for the who_is_here tool (see FACES.md)
+[project.optional-dependencies]
+faces = [
+    "opencv-python<=5.0",
+    "requests>=2.31",
+]
+
 [dependency-groups]
 dev = [
   "allure-pytest==2.16.0",

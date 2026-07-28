@@ -14,6 +14,9 @@ tags:
 
 # Reachy Mini conversation app
 
+> **This fork adds local face recognition** — Reachy identifies the people in
+> the room by name (`who_is_here` tool + `companion` profile). See [FACES.md](FACES.md).
+
 Conversational app for the Reachy Mini robot combining realtime voice backends and choreographed motion libraries.
 
 ![Reachy Mini Dance](docs/assets/reachy_mini_dance.gif)
