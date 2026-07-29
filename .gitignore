@@ -72,3 +72,6 @@ external_content/installed_tool_spaces.json
 # --- Face recognition fork additions (see FACES.md) ---
 data/faces.npz
 data/models/
+
+# Personal family profiles: contain names/ages - never publish
+profiles/companion_rouif/
