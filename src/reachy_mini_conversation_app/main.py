@@ -283,6 +283,14 @@ def run(
         logger.error("Failed to initialize tools: %s", e)
         sys.exit(1)
 
+    # Fork addition: live face-recognition viewer (http://<robot>:8001)
+    try:
+        from reachy_mini_conversation_app import face_view
+
+        face_view.maybe_start(robot)
+    except Exception as e:
+        logger.warning("Face view not started: %s", e)
+
     # Each async service → its own thread/loop
     movement_manager.start()
     # Audio-reactive head motion is driven by the daemon's wobbler, which

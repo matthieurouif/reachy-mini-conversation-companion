@@ -73,6 +73,7 @@ class FaceIdentifier:
         self.names: list[str] = []
         self.embeddings = np.zeros((0, 128), dtype=np.float32)
         self.db_mtime = 0.0
+        self._infer_lock = threading.Lock()  # cv2 models are not thread-safe
         self.reload_db()
 
     def reload_db(self) -> None:
@@ -101,22 +102,30 @@ class FaceIdentifier:
         feat = self.recognizer.feature(aligned).flatten().astype(np.float32)
         return feat / (np.linalg.norm(feat) + 1e-9)
 
+    def identify_detailed(self, frame_bgr: np.ndarray) -> list[dict]:
+        """Return one dict per face: {name (or None), score, box (x, y, w, h)}."""
+        with self._infer_lock:
+            self.reload_db()
+            results: list[dict] = []
+            for det in self.detect_faces(frame_bgr):
+                x, y, w, h = det[:4].astype(int)
+                name, score = None, 0.0
+                if len(self.names) > 0:
+                    feat = self.embed(frame_bgr, det)
+                    sims = self.embeddings @ feat
+                    best = int(np.argmax(sims))
+                    if sims[best] >= self.threshold:
+                        name, score = self.names[best], float(sims[best])
+                results.append(
+                    {"name": name, "score": score, "box": (int(x), int(y), int(w), int(h))}
+                )
+            return results
+
     def identify(self, frame_bgr: np.ndarray) -> tuple[list[str], int]:
         """Return (recognized names, count of unrecognized faces) in the frame."""
-        self.reload_db()
-        recognized: list[str] = []
-        unknown = 0
-        for det in self.detect_faces(frame_bgr):
-            if len(self.names) == 0:
-                unknown += 1
-                continue
-            feat = self.embed(frame_bgr, det)
-            sims = self.embeddings @ feat
-            best = int(np.argmax(sims))
-            if sims[best] >= self.threshold:
-                recognized.append(self.names[best])
-            else:
-                unknown += 1
+        faces = self.identify_detailed(frame_bgr)
+        recognized = [f["name"] for f in faces if f["name"]]
+        unknown = sum(1 for f in faces if not f["name"])
         return recognized, unknown
 
 
